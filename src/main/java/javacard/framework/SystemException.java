@@ -84,6 +84,7 @@ public class SystemException extends CardRuntimeException {
      */
     public static void throwIt(short reason)
             throws SystemException {
-        throw new SystemException(reason);
+    	System.out.println(reason);
+    	throw new SystemException(reason);
     }
 }

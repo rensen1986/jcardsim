@@ -129,7 +129,7 @@ public class SimulatorTest extends TestCase {
      */
     public void testInstallApplet_5args_1() {
         System.out.println("installApplet");
-        Simulator instance = new Simulator();
+        AppletFacility instance = new Simulator();
         assertEquals(instance.installApplet(TEST_APPLET_AID, TEST_APPLET_CLASS, createData, (short)0, (byte) createData.length).equals(TEST_APPLET_AID),true);
     }
 
@@ -138,7 +138,7 @@ public class SimulatorTest extends TestCase {
      */
     public void testInstallApplet_5args_2() {
         System.out.println("installApplet");
-        Simulator instance = new Simulator();
+        AppletFacility instance = new Simulator();
         assertEquals(instance.installApplet(TEST_APPLET_AID, TEST_APPLET_CLASSNAME, createData, (short)0, (byte) createData.length).equals(TEST_APPLET_AID),true);
     }
 
@@ -175,7 +175,7 @@ public class SimulatorTest extends TestCase {
      */
     public void testSelectApplet() {
         System.out.println("selectApplet");
-        Simulator instance = new Simulator();
+        AppletFacility instance = new Simulator();
         instance.installApplet(TEST_APPLET_AID, TEST_APPLET_CLASS);
         assertEquals(instance.selectApplet(TEST_APPLET_AID), true);
     }
