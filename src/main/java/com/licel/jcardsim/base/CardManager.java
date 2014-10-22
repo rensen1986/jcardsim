@@ -26,7 +26,7 @@ import javacard.framework.Util;
  */
 public class CardManager {
 
-    // basic impl
+	// basic impl
     public static byte[] dispatchApdu(JavaCardInterface sim, byte[] capdu) {
         byte[] theSW = new byte[2];
         if (capdu[ISO7816.OFFSET_CLA] == (byte)0x80 && capdu[ISO7816.OFFSET_INS] == (byte)0xb8) {

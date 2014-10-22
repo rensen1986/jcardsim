@@ -103,7 +103,7 @@ public class SimulatorRuntime {
      * Return <code>Applet</code> by it's AID or null
      * @param aid applet <code>AID</code>
      */
-    protected Applet getApplet(AID aid) {
+    public Applet getApplet(AID aid) {
         if (aid == null) {
             return null;
         }

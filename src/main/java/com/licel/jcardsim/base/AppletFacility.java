@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.text.MessageFormat;
 
+import at.fhj.ase.globalplatform.SecurityDomain;
 import javacard.framework.AID;
 import javacard.framework.Applet;
 import javacard.framework.SystemException;
@@ -24,7 +25,7 @@ public class AppletFacility extends AppletClassLoader{
     // Applet ClassName system property template
     static final MessageFormat APPLET_CLASS_SP_TEMPLATE = new MessageFormat("{0}.Class");
 	public static byte[] atr = null;
-	protected static AppletClassLoader cl;
+	protected final AppletClassLoader cl;
 	public static Class<? extends Simulator> urls;
 	public static void setATR(byte[] newAtr) {
 	    atr = newAtr;
@@ -175,8 +176,12 @@ public class AppletFacility extends AppletClassLoader{
 		cl = getClassLoader();
 	}
 
-	// inspect class hierarchy
-    boolean checkAppletSuperclass(Class appletClass) {
+	public static AID getCurrentSelectedAppletAID() {
+		return SimulatorSystem.getAID();
+	}
+
+	// inspect class hierarchy	
+	boolean checkAppletSuperclass(Class appletClass) {
         Class parent = appletClass;
         while (parent != Object.class) {
             if (parent == Applet.class) {
@@ -186,4 +191,9 @@ public class AppletFacility extends AppletClassLoader{
         }
         return false;
     }
+
+	public static SecurityDomain getAssociatedSecurityDomain(AID currentSelectedApplet) {
+		// TODO Implement me
+		return null;
+	}
 }
