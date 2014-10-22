@@ -1,9 +1,37 @@
+/*
+ * Copyright 2014 Robert Bachmann
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.licel.jcardsim.samples;
 
 import javacard.framework.*;
 
+/**
+ * Multi instance sample applet
+ *
+ * Returns <code>FCI</code> (file control information) on SELECT
+ *
+ * Supported APDUs:
+ *
+ * <ul>
+ *     <li><code>CLA=0x80 INS=0</code> return AID</li>
+ *     <li><code>CLA=0x80 INS=2</code> return instance count</li>
+ *     <li><code>CLA=0x80 INS=4</code> lock the applet</li>
+ * </ul>
+ */
 public class MultiInstanceApplet extends BaseApplet implements AppletEvent {
-    private static final byte CLA = (byte) 0x90;
+    private static final byte CLA = (byte) 0x80;
     private static final byte INS_GET_FULL_AID = 0;
     private static final byte INS_GET_COUNT = 2;
     private static final byte INS_MAKE_UNUSABLE = 4;

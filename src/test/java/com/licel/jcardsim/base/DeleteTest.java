@@ -5,11 +5,10 @@ import com.licel.jcardsim.utils.AIDUtil;
 import com.licel.jcardsim.utils.ByteUtil;
 import javacard.framework.AID;
 import javacard.framework.ISO7816;
-import javacard.framework.Util;
 import junit.framework.TestCase;
 
 public class DeleteTest extends TestCase {
-    private static final byte CLA = (byte) 0x90;
+    private static final byte CLA = (byte) 0x80;
     private static final byte INS_GET_COUNT = 2;
 
     public DeleteTest(String name) {

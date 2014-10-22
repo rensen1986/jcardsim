@@ -116,8 +116,31 @@ public interface JavaCardInterface extends CardInterface {
      * Select applet by it's AID
      * It's method must be called before start working with applet instance
      * @param aid appletId
-     * @return byte array or null
+     * @return byte array
      */
     public byte[] selectAppletWithResult(AID aid);
-    
+
+    /**
+     * Switch protocol
+     *
+     * Supported protocols are:
+     * <ul>
+     *     <li><code>T=0</code> (alias: <code>*</code>)</li>
+     *     <li><code>T=1</code></li>
+     *     <li><code>T=CL, TYPE_A, T0</code> (alias: <code>T=CL</code>)</li>
+     *     <li><code>T=CL, TYPE_A, T1</code></li>
+     *     <li><code>T=CL, TYPE_B, T0</code></li>
+     *     <li><code>T=CL, TYPE_B, T1</code></li>
+     * </ul>
+     *
+     * @param protocol protocol to use
+     * @throws java.lang.IllegalArgumentException for unknown protocols
+     */
+    public void changeProtocol(String protocol);
+
+    /**
+     * @return the current protocol string
+     * @see #changeProtocol(String)
+     */
+    public String getProtocol();
 }

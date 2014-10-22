@@ -232,9 +232,10 @@ public final class APDU {
     private static final short T0_IBS = 1;
     // output block size, for T0 protocol = 258
     private static final short T0_OBS = 258;
+    // block size, for T1 protocol
+    private static final short T1_BLOCK_SIZE = 254;
     // NAD, for T0 protocol = 9
     private static final byte T0_NAD = 0;
-    private final boolean extended;
     // transient array to store variables
     private short[] ramVars;
     // LE variable offset in ramVars
@@ -249,8 +250,10 @@ public final class APDU {
     private static final byte CURRENT_STATE = 5;
     // LOGICAL_CHN variable offset in ramVars
     private static final byte LOGICAL_CHN = 6;
+    // ACTIVE_PROTOCOL variable offset in ramVars
+    private static final byte ACTIVE_PROTOCOL = 7;
     // total length ramVars
-    private static final byte RAM_VARS_LENGTH = 7;
+    private static final byte RAM_VARS_LENGTH = 8;
     // transient array to store boolean flags
     private boolean[] flags;
     // outgoingFlag;
@@ -263,16 +266,21 @@ public final class APDU {
     private static final byte INCOMING_FLAG = 3;
     // notGetResponseFlag;
     private static final byte NO_GET_RESPONSE_FLAG = 4;
+    // accessAllowedFlag;
+    private static final byte ACCESS_ALLOWED_FLAG = 5;
     // total length flags
-    private static final byte FLAGS_LENGTH = 5;
-    //
-    private byte[] buffer;
+    private static final byte FLAGS_LENGTH = 6;
+    // APDU input buffer
+    private final byte[] buffer;
+    // extended APDU flag
+    private final boolean extended;
 
     APDU(boolean extended) {
         this.extended = extended;
-        buffer = SimulatorSystem.makeInternalBuffer(extended ? BUFFER_EXTENDED_SIZE : BUFFER_SIZE);
-        ramVars = JCSystem.makeTransientShortArray(RAM_VARS_LENGTH, JCSystem.CLEAR_ON_RESET);
-        flags = JCSystem.makeTransientBooleanArray(FLAGS_LENGTH, JCSystem.CLEAR_ON_RESET);
+        buffer = new byte[extended ? BUFFER_EXTENDED_SIZE : BUFFER_SIZE];
+        ramVars = new short[RAM_VARS_LENGTH];
+        flags = new boolean[FLAGS_LENGTH];
+        internalReset(PROTOCOL_T0, null);
     }
 
     /**
@@ -306,7 +314,7 @@ public final class APDU {
      * @see #receiveBytes(short)
      */
     public static short getInBlockSize() {
-        return T0_IBS;
+        return (getProtocol() & PROTOCOL_T1) == PROTOCOL_T1 ? T1_BLOCK_SIZE : T0_IBS;
     }
 
     /**
@@ -325,7 +333,7 @@ public final class APDU {
      * @see #setOutgoingLength(short)
      */
     public static short getOutBlockSize() {
-        return T0_OBS;
+        return (getProtocol() & PROTOCOL_T1) == PROTOCOL_T1 ? T1_BLOCK_SIZE : T0_OBS;
     }
 
     /**
@@ -336,7 +344,8 @@ public final class APDU {
      * @see <CODE>PROTOCOL_T0</CODE>
      */
     public static byte getProtocol() {
-        return PROTOCOL_T0;
+        APDU apdu = SimulatorSystem.getCurrentAPDU();
+        return (byte) apdu.ramVars[ACTIVE_PROTOCOL];
     }
 
     /**
@@ -714,7 +723,11 @@ public final class APDU {
      */
     public static APDU getCurrentAPDU()
             throws SecurityException {
-        return SimulatorSystem.getCurrentAPDU();
+        APDU currentAPDU = SimulatorSystem.getCurrentAPDU();
+        if (!currentAPDU.flags[ACCESS_ALLOWED_FLAG]) {
+            throw new SecurityException("getCurrentAPDU must not be called outside of Applet#process()");
+        }
+        return currentAPDU;
     }
 
     /**
@@ -752,7 +765,8 @@ public final class APDU {
      * @return logical channel number, if present, within the CLA byte, 0 otherwise
      */
     public static byte getCLAChannel() {
-        return (byte) getCurrentAPDU().ramVars[LOGICAL_CHN];
+        APDU apdu = SimulatorSystem.getCurrentAPDU();
+        return (byte) apdu.ramVars[LOGICAL_CHN];
     }
 
     /**
@@ -772,8 +786,9 @@ public final class APDU {
      */
     public static void waitExtension()
             throws APDUException {
-        if (getCurrentAPDU().flags[NO_CHAINING_FLAG]) {
-            APDUException.throwIt((short) 1);
+        APDU apdu = SimulatorSystem.getCurrentAPDU();
+        if (!apdu.flags[ACCESS_ALLOWED_FLAG] || apdu.flags[NO_CHAINING_FLAG]) {
+            APDUException.throwIt(APDUException.ILLEGAL_USE);
         }
     }
 
@@ -787,6 +802,7 @@ public final class APDU {
      * @return <code>true</code> if this APDU is not the last APDU of a command chain, <code>false</code> otherwise.
      * @since 2.2.2
      */
+    @SuppressWarnings("unused")
     public boolean isCommandChainingCLA() {
         return (buffer[ISO7816.OFFSET_CLA] & 0x10) == 0x10;
     }
@@ -803,6 +819,7 @@ public final class APDU {
      * @return <code>true</code> if the secure messaging bit(s) is(are) nonzero, <code>false</code> otherwise
      * @since 2.2.2
      */
+    @SuppressWarnings("unused")
     public boolean isSecureMessagingCLA() {
         return (buffer[ISO7816.OFFSET_CLA] & 0x40) == 0x40 ? (buffer[ISO7816.OFFSET_CLA] & 0x20) == 0x20 : (buffer[ISO7816.OFFSET_CLA] & 0x0C) != 0;
 
@@ -819,6 +836,7 @@ public final class APDU {
      * @return <code>true</code> if this APDU CLA byte corresponds to an interindustry command, <code>false</code> otherwise.
      * @since 2.2.2
      */
+    @SuppressWarnings("unused")
     public boolean isISOInterindustryCLA() {
         return (buffer[ISO7816.OFFSET_CLA]& 0x80) != 0x80;
     }
@@ -837,6 +855,13 @@ public final class APDU {
      * @since 2.2.2
      */
     public short getIncomingLength() {
+        if (!flags[INCOMING_FLAG] || flags[OUTGOING_FLAG]) {
+            throw new APDUException(APDUException.ILLEGAL_USE);
+        }
+        return internalGetIncomingLength();
+    }
+
+    private short internalGetIncomingLength() {
         if (extended) {
             return Util.getShort(buffer, (short) (ISO7816.OFFSET_LC + 1));
         }
@@ -859,6 +884,13 @@ public final class APDU {
      * @since 2.2.2
      */
     public short getOffsetCdata() {
+        if (!flags[INCOMING_FLAG] || flags[OUTGOING_FLAG]) {
+            throw new APDUException(APDUException.ILLEGAL_USE);
+        }
+        return internalGetOffsetCdata();
+    }
+
+    private short internalGetOffsetCdata() {
         if (extended) {
             return ISO7816.OFFSET_CDATA + 2;
         }
@@ -878,14 +910,22 @@ public final class APDU {
      * clear internal state of the APDU
      * called by SimulatorRuntime via reflection
      */
-    @SuppressWarnings("unused")
-    private void internalReset(byte[] inputBuffer) {
+    private void internalReset(byte protocol, byte[] inputBuffer) {
+        if (inputBuffer == null) {
+            flags[ACCESS_ALLOWED_FLAG] = false;
+            ramVars[ACTIVE_PROTOCOL] = protocol;
+            return;
+        }
+
         Arrays.fill(buffer, (byte) 0);
         Arrays.fill(ramVars, (short) 0);
-        for(byte i=0;i<flags.length;i++) {flags[i]=false;}
         System.arraycopy(inputBuffer, 0, buffer, 0, inputBuffer.length);
+        for(byte i=0;i<flags.length;i++) {flags[i]=false;}
 
-        int offset = getOffsetCdata() + getIncomingLength();
+        flags[ACCESS_ALLOWED_FLAG] = true;
+        ramVars[ACTIVE_PROTOCOL] = protocol;
+
+        int offset = internalGetOffsetCdata() + internalGetIncomingLength();
         short le;
         if (extended) {
             le = ByteUtil.getShort(buffer, offset);

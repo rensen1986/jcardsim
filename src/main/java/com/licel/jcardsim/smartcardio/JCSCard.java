@@ -27,7 +27,6 @@ import javax.smartcardio.*;
 public class JCSCard extends Card {
     // default protocol
 
-    static final String T0_PROTOCOL = "T=0";
     // ATR
     private ATR atr;
     // Simulator
@@ -52,7 +51,7 @@ public class JCSCard extends Card {
      * Always returns T=0.
      */
     public String getProtocol() {
-        return T0_PROTOCOL;
+        return cardInterface.getProtocol();
     }
 
     public CardChannel getBasicChannel() {
@@ -85,9 +84,14 @@ public class JCSCard extends Card {
     }
 
     /**
-     * Do nothing.
+     * Disconnect form the card
+     * @param reset true if the card should be reset
+     * @see Card#disconnect(boolean)
      */
-    public void disconnect(boolean bln) throws CardException {
+    public void disconnect(boolean reset) throws CardException {
+        if (reset) {
+            cardInterface.reset();
+        }
     }
 
     ResponseAPDU transmitCommand(CommandAPDU capdu) {

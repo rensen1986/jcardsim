@@ -80,7 +80,7 @@ public final class JCSystem {
      * </ul>
      */
     public static final byte CLEAR_ON_DESELECT = 2;
-    // implementaion api version
+    // implementation api version
     private static final short API_VERSION = 0x0202;
 
     /**
@@ -477,4 +477,6 @@ public final class JCSystem {
     public static boolean isAppletActive(AID theApplet) {
         return SimulatorSystem.isAppletActive(theApplet);
     }
+
+    private JCSystem() {}
 }
